@@ -1,11 +1,21 @@
 #include <iostream>
+#include <conio.h>
 
 #define width 12
-#define height 22
+#define height 23
+#define UP 72
+#define DOWN 80
+#define RIGHT 77
+#define LEFT 75
+
+// 배열에서 움직임을 표현하고 있기에 일반적인 그래픽과는 다르다는 점을 항상 명심하자.
 
 class Tetris {
     const char* full = "■";
     const char* empty = "□";
+    int core_x;     // 블럭의 코어 x좌표
+    int core_y;     // 블럭의 코어 y좌표
+    int rotation;   // 회전 상태를 나타내는 인자
 
     public:
     int tet[height][width] = { 0 };
@@ -14,6 +24,12 @@ class Tetris {
     void set_edge();
     void gen_block();
 
+    // 블럭이 존재해야하는 공간(경계)은 width 1~10, height 1~22.
+    void up_arrow();
+    void down_arrow();
+    void left_arrow();
+    void right_arrow();
+    void down_natural();
 };
 
 void Tetris::show_stat_num() {
@@ -55,13 +71,68 @@ void Tetris::gen_block() {
     
 }
 
+void Tetris::up_arrow() {
+
+}
+
+void Tetris::down_arrow() {
+
+}
+
+void Tetris::left_arrow() {
+
+}
+
+void Tetris::right_arrow() {
+
+}
+
+void Tetris::down_natural() {
+
+}
+
 int main() {
     Tetris tet;
     tet.set_edge();
     tet.show_stat_num();
     tet.show_stat_sym();
-
-
-    return 0;
     
+    while(true) {
+        if(kbhit()) {
+            int pressed_key = getch();
+            switch(pressed_key) {
+                case 72:
+                    // 위쪽 방향키, 회전
+                    currentPosY -= 1;
+                    setCursorPos(currentPosX, currentPosY);
+                    printf("■");
+                    break;
+
+                case 80:
+                    // 아래쪽 방향키, 빠르게 하강(시간을 손봐야하나...)
+                    currentPosY += 1;
+                    setCursorPos(currentPosX, currentPosY);
+                    printf("■");
+                    break;
+
+                case 75:
+                    // 왼쪽 방향키, 왼쪽으로 이동
+                    currentPosX -= 2;
+                    setCursorPos(currentPosX, currentPosY);
+                    printf("■");
+                    break;
+
+                case 77:
+                    // 오른쪽 방향키, 오른쪽으로 이동
+                    currentPosX += 2;
+                    setCursorPos(currentPosX, currentPosY);
+                    printf("■");
+                    break;
+
+                default:
+                    break;
+                }
+        }
+    }
+    return 0;
 }
