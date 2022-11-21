@@ -24,7 +24,6 @@ int main() {
     for (int i = 0; i < 12; i++) printf("бс");
     printf("\n");
 
-    printf("\u2103\n");
 
 
     return 0;
