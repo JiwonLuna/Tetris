@@ -1,19 +1,35 @@
 #include <iostream>
-#include <ctime>
+#include <chrono>
+#include <Windows.h>
+ 
 using namespace std;
  
-int main() {
-    clock_t start, finish;
-    double duration;
+// C++ ÇÁ·Î±×·¥ÀÇ °æ°ú ½Ã°£À» ÃøÁ¤ÇÏ´Â ¸ŞÀÎ ÇÔ¼ö
+// Å©·Î³ë ¶óÀÌºê·¯¸® »ç¿ë
+int main()
+{
+    auto start = chrono::steady_clock::now();
  
-    start = clock();
-    
-    /*ì‹¤í–‰ ì‹œê°„ì„ ì¸¡ì •í•˜ê³  ì‹¶ì€ ì½”ë“œ*/
+    // ¿©±â¿¡¼­ ¸î °¡Áö ÀÛ¾÷À» ¼öÇàÇÕ´Ï´Ù.
+    Sleep(300);
  
-    finish = clock();
+    auto end = chrono::steady_clock::now();
  
-    duration = (double)(finish - start) / CLOCKS_PER_SEC;
-    cout << duration << "ì´ˆ" << endl;
+    cout << "Elapsed time in nanoseconds: "
+        << chrono::duration_cast<chrono::nanoseconds>(end - start).count()
+        << " ns" << endl;
+ 
+    cout << "Elapsed time in microseconds: "
+        << chrono::duration_cast<chrono::microseconds>(end - start).count()
+        << " ?s" << endl;
+ 
+    cout << "Elapsed time in milliseconds: "
+        << chrono::duration_cast<chrono::milliseconds>(end - start).count()
+        << " ms" << endl;
+ 
+    cout << "Elapsed time in seconds: "
+        << chrono::duration_cast<chrono::seconds>(end - start).count()
+        << " sec";
  
     return 0;
 }

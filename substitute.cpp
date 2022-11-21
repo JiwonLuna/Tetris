@@ -1,5 +1,6 @@
 #include <iostream>
 #include <conio.h>
+#include <Windows.h>
 
 #define width 12
 #define height 23
@@ -13,11 +14,12 @@
 class Tetris {
     const char* full = "■";
     const char* empty = "□";
-    int core_x;     // 블럭의 코어 x좌표
-    int core_y;     // 블럭의 코어 y좌표
-    int rotation;   // 회전 상태를 나타내는 인자
+    int core_x;     // 블럭의 코어 x좌표 1~10 (왼쪽 -> 오른쪽)
+    int core_y;     // 블럭의 코어 y좌표 23~1 (위 -> 아래)
+    int rotation;   // 회전 상태를 나타내는 인자 1~4
 
     public:
+    Tetris();
     int tet[height][width] = { 0 };
     void show_stat_num();
     void show_stat_sym();
@@ -31,6 +33,12 @@ class Tetris {
     void right_arrow();
     void down_natural();
 };
+
+Tetris::Tetris() {
+    core_x = 5;
+    core_y = 23;
+    rotation = 1;
+}
 
 void Tetris::show_stat_num() {
     for (int i = 0; i < height; i++) {
@@ -94,6 +102,7 @@ void Tetris::down_natural() {
 int main() {
     Tetris tet;
     tet.set_edge();
+    
     tet.show_stat_num();
     tet.show_stat_sym();
     
