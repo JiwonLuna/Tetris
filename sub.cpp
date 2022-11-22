@@ -3,7 +3,7 @@
 #include <Windows.h>
 
 #define width 12
-#define height 24
+#define height 26
 #define UP 72
 #define DOWN 80
 #define RIGHT 77
@@ -11,7 +11,7 @@
 #define On 1
 #define Off 0
 #define startx 5
-#define starty 0
+#define starty 2
 
 
 // 배열에서 움직임을 표현하고 있기에 일반적인 그래픽과는 다르다는 점을 항상 명심하자.
@@ -24,8 +24,10 @@ class Tetris {
     int core_y;     // 블럭의 코어 y좌표 1~23 (위 -> 아래)
     int rotation;   // 회전 상태를 나타내는 인자 1~4
 
+
     public:
     Tetris();
+    
     int tet[width][height] = { 0 };
     void show_stat_num();
     void show_stat_sym();
@@ -33,7 +35,7 @@ class Tetris {
     void gen_block(char type);
     void block(int rot, int onoff);
     
-
+    int check_sum();
     // 블럭이 존재해야하는 공간(경계)은 width 1~10, height 1~22.
     void up_arrow();
     void down_arrow();
@@ -44,7 +46,7 @@ class Tetris {
 
 Tetris::Tetris() {
     core_x = 5;
-    core_y = 0;
+    core_y = 2;
     rotation = 0;
 }
 
@@ -58,7 +60,7 @@ void Tetris::show_stat_num() {
 }
 
 void Tetris::show_stat_sym() {
-    for (int i = 1; i < height-1; i++) {
+    for (int i = 4; i < height-1; i++) {
         for (int j = 0; j < width; j++) {
             if(tet[j][i]==1){
                 std::cout << full;
@@ -141,6 +143,15 @@ void Tetris::block(int rot, int onoff) {
 
 }
 
+int Tetris::check_sum() {
+    int sum = 0;
+    for(int i = 0; i < height; i++) {
+        for(int j = 0; j < width; j++) {
+            sum += tet[j][i];
+        }
+    }
+    return sum;
+}
 
 void Tetris::up_arrow() {   // rotation
     
@@ -151,21 +162,40 @@ void Tetris::down_arrow() {
 }
 
 void Tetris::left_arrow() {
-    Tetris::block(rotation, Off);
+    int check = check_sum();
+    block(rotation, Off);
     core_x -= 1;
-    Tetris::block(rotation, On);
+    block(rotation, On);
+    if(check != check_sum()) {
+        block(rotation,Off);
+        core_x +=1;
+    }
+    block(rotation, On);
+    
 }
 
 void Tetris::right_arrow() {
-    Tetris::block(rotation, Off);
+    int check = check_sum();
+    block(rotation, Off);
     core_x += 1;
-    Tetris::block(rotation, On);
+    block(rotation, On);
+    if(check != check_sum()) {
+        block(rotation, Off);
+        core_x -=1;
+    }
+    block(rotation, On);
 }
 
 void Tetris::down_natural() {
-    Tetris::block(rotation, Off);
+    int check = check_sum();
+    block(rotation, Off);
     core_y += 1;
-    Tetris::block(rotation, On);
+    block(rotation, On);
+    if(check != check_sum()) {
+        block(rotation, Off);
+        core_y -=1;
+    }
+    block(rotation, On);
 }
 
 int main() {
