@@ -3,11 +3,16 @@
 #include <Windows.h>
 
 #define width 12
-#define height 23
+#define height 24
 #define UP 72
 #define DOWN 80
 #define RIGHT 77
 #define LEFT 75
+#define On 1
+#define Off 0
+#define startx 5
+#define starty 0
+
 
 // 배열에서 움직임을 표현하고 있기에 일반적인 그래픽과는 다르다는 점을 항상 명심하자.
 
@@ -16,7 +21,7 @@ class Tetris {
     const char* empty = "□";
     char block_type;
     int core_x;     // 블럭의 코어 x좌표 1~10 (왼쪽 -> 오른쪽)
-    int core_y;     // 블럭의 코어 y좌표 23~1 (위 -> 아래)
+    int core_y;     // 블럭의 코어 y좌표 1~23 (위 -> 아래)
     int rotation;   // 회전 상태를 나타내는 인자 1~4
 
     public:
@@ -25,12 +30,12 @@ class Tetris {
     void show_stat_num();
     void show_stat_sym();
     void set_edge();
-    void gen_block();
-    void block(char type, int x, int y, int rot);
+    void gen_block(char type);
+    void block(int rot, int onoff);
     
 
     // 블럭이 존재해야하는 공간(경계)은 width 1~10, height 1~22.
-    void up_arrow(int rot);
+    void up_arrow();
     void down_arrow();
     void left_arrow();
     void right_arrow();
@@ -39,7 +44,7 @@ class Tetris {
 
 Tetris::Tetris() {
     core_x = 5;
-    core_y = 23;
+    core_y = 0;
     rotation = 0;
 }
 
@@ -53,7 +58,7 @@ void Tetris::show_stat_num() {
 }
 
 void Tetris::show_stat_sym() {
-    for (int i = 0; i < height; i++) {
+    for (int i = 1; i < height-1; i++) {
         for (int j = 0; j < width; j++) {
             if(tet[j][i]==1){
                 std::cout << full;
@@ -69,74 +74,75 @@ void Tetris::show_stat_sym() {
 
 void Tetris::set_edge() {
     for (int i = 0; i < width; i++) {
-        tet[i][height-1] = 1;
-        tet[i][0] = 1;
+        tet[i][height-2] = On;
     }
-    for (int i = 1; i < (height-1); i++) {
-        tet[0][i] = 1;
-        tet[width-1][i] = 1;
+    for (int i = 0; i < (height-1); i++) {
+        tet[0][i] = On;
+        tet[width-1][i] = On;
     }
 }
 
-void Tetris::gen_block() {
+void Tetris::gen_block(char type) {
+    block_type = type;
+    core_x = startx;
+    core_y = starty;
     rotation = 0;
 }
 
-void Tetris::block(char type, int x, int y, int rot) {
-    block_type = type;
-    core_x = x;
-    core_y = y;
+void Tetris::block(int rot, int onoff) {
+    
     rotation = rot;
-    tet[core_x][core_y] = 1;
+    tet[core_x][core_y] = onoff;
 
-    switch(type) {
+    switch(block_type) {
         
         case 'i':
-        tet[core_x][core_y-1] = 1;
-        tet[core_x][core_y+1] = 1;
-        tet[core_x][core_y+2] = 1;
+        tet[core_x][core_y-1] = onoff;
+        tet[core_x][core_y+1] = onoff;
+        tet[core_x][core_y+2] = onoff;
         break;
 
         case 'o':
-        tet[core_x+1][core_y] = 1;
-        tet[core_x][core_y-1] = 1;
-        tet[core_x+1][core_y-1] = 1;
+        tet[core_x+1][core_y] = onoff;
+        tet[core_x][core_y-1] = onoff;
+        tet[core_x+1][core_y-1] = onoff;
         break;
 
         case 'z':
-        tet[core_x-1][core_y] = 1;
-        tet[core_x][core_y+1] = 1;
-        tet[core_x+1][core_y+1] = 1;
+        tet[core_x-1][core_y] = onoff;
+        tet[core_x][core_y+1] = onoff;
+        tet[core_x+1][core_y+1] = onoff;
         break;
 
         case 's':
-        tet[core_x+1][core_y] = 1;
-        tet[core_x][core_y+1] = 1;
-        tet[core_x-1][core_y+1] = 1;
+        tet[core_x+1][core_y] = onoff;
+        tet[core_x][core_y+1] = onoff;
+        tet[core_x-1][core_y+1] = onoff;
         break;
         
         case 'j':
-        tet[core_x][core_y-1] = 1;
-        tet[core_x][core_y+1] = 1;
-        tet[core_x-1][core_y+1] = 1;
+        tet[core_x][core_y-1] = onoff;
+        tet[core_x][core_y+1] = onoff;
+        tet[core_x-1][core_y+1] = onoff;
         break;
 
         case 'l':
-        tet[core_x][core_y-1] = 1;
-        tet[core_x][core_y+1] = 1;
-        tet[core_x+1][core_y+1] = 1;
+        tet[core_x][core_y-1] = onoff;
+        tet[core_x][core_y+1] = onoff;
+        tet[core_x+1][core_y+1] = onoff;
         break;
 
         case 't':
-        tet[core_x][core_y-1] = 1;
-        tet[core_x-1][core_y] = 1;
-        tet[core_x+1][core_y] = 1;
+        tet[core_x][core_y-1] = onoff;
+        tet[core_x-1][core_y] = onoff;
+        tet[core_x+1][core_y] = onoff;
         break;
     }
 
 }
 
-void Tetris::up_arrow(int rot) {   // rotation
+
+void Tetris::up_arrow() {   // rotation
     
 }
 
@@ -145,23 +151,58 @@ void Tetris::down_arrow() {
 }
 
 void Tetris::left_arrow() {
-
+    Tetris::block(rotation, Off);
+    core_x -= 1;
+    Tetris::block(rotation, On);
 }
 
 void Tetris::right_arrow() {
-
+    Tetris::block(rotation, Off);
+    core_x += 1;
+    Tetris::block(rotation, On);
 }
 
 void Tetris::down_natural() {
-
+    Tetris::block(rotation, Off);
+    core_y += 1;
+    Tetris::block(rotation, On);
 }
 
 int main() {
+    system("cls");
     Tetris tet;
     tet.set_edge();
-    
-    tet.block('j',5,4,1);
     tet.show_stat_sym();
+    tet.gen_block('j');
+    tet.block(0,On);
+
+    int input;
+
+    while(true) {
+        
+        input = _getch();
+
+        if (input ==224){
+            system("cls");
+            input = _getch();
+        }
+        if (input == UP){
+            
+        }
+        else if (input == DOWN) {
+            tet.down_natural();
+        }
+        else if (input == RIGHT) {
+            tet.right_arrow();
+        }
+        else if (input == LEFT) {
+            tet.left_arrow();
+        }
+        tet.set_edge();
+        tet.show_stat_sym();
+    }
+    
+
     // while(true) {
     //     if(kbhit()) {
     //         int pressed_key = getch();
