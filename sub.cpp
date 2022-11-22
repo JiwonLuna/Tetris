@@ -23,7 +23,7 @@ class Tetris {
     int core_x;     // 블럭의 코어 x좌표 1~10 (왼쪽 -> 오른쪽)
     int core_y;     // 블럭의 코어 y좌표 1~23 (위 -> 아래)
     int rotation;   // 회전 상태를 나타내는 인자 1~4
-
+    int rotnum;     // 한 블럭이 낙하 전까지 회전한 횟수
 
     public:
     Tetris();
@@ -33,7 +33,7 @@ class Tetris {
     void show_stat_sym();
     void set_edge();
     void gen_block(char type);
-    void block(int rot, int onoff);
+    void block(int onoff);
     
     int check_sum();
     // 블럭이 존재해야하는 공간(경계)은 width 1~10, height 1~22.
@@ -60,7 +60,7 @@ void Tetris::show_stat_num() {
 }
 
 void Tetris::show_stat_sym() {
-    for (int i = 4; i < height-1; i++) {
+    for (int i = 0; i < height; i++) {
         for (int j = 0; j < width; j++) {
             if(tet[j][i]==1){
                 std::cout << full;
@@ -76,9 +76,9 @@ void Tetris::show_stat_sym() {
 
 void Tetris::set_edge() {
     for (int i = 0; i < width; i++) {
-        tet[i][height-2] = On;
+        tet[i][height-1] = On;
     }
-    for (int i = 0; i < (height-1); i++) {
+    for (int i = 0; i < height; i++) {
         tet[0][i] = On;
         tet[width-1][i] = On;
     }
@@ -89,58 +89,92 @@ void Tetris::gen_block(char type) {
     core_x = startx;
     core_y = starty;
     rotation = 0;
+    rotnum = 0;
 }
 
-void Tetris::block(int rot, int onoff) {
+void Tetris::block(int onoff) {
     
-    rotation = rot;
-    tet[core_x][core_y] = onoff;
+    int l;
+    int r;
+    int u;
+    int d;
+    int x = core_x;
+    int y = core_y;
+    int rot = rotnum % 4;
+    
+    if(onoff == On){
+        tet[x][y] = onoff;
 
-    switch(block_type) {
-        
-        case 'i':
-        tet[core_x][core_y-1] = onoff;
-        tet[core_x][core_y+1] = onoff;
-        tet[core_x][core_y+2] = onoff;
-        break;
+        switch(block_type) {
+            
+            case 'i':
+            tet[x][y-1] = onoff;
+            tet[x][y+1] = onoff;
+            tet[x][y+2] = onoff;
+            break;
 
-        case 'o':
-        tet[core_x+1][core_y] = onoff;
-        tet[core_x][core_y-1] = onoff;
-        tet[core_x+1][core_y-1] = onoff;
-        break;
+            case 'o':
+            tet[x+1][y] = onoff;
+            tet[x][y-1] = onoff;
+            tet[x+1][y-1] = onoff;
+            break;
 
-        case 'z':
-        tet[core_x-1][core_y] = onoff;
-        tet[core_x][core_y+1] = onoff;
-        tet[core_x+1][core_y+1] = onoff;
-        break;
+            case 'z':
+            tet[x-1][y] = onoff;
+            tet[x][y+1] = onoff;
+            tet[x+1][y+1] = onoff;
+            break;
 
-        case 's':
-        tet[core_x+1][core_y] = onoff;
-        tet[core_x][core_y+1] = onoff;
-        tet[core_x-1][core_y+1] = onoff;
-        break;
-        
-        case 'j':
-        tet[core_x][core_y-1] = onoff;
-        tet[core_x][core_y+1] = onoff;
-        tet[core_x-1][core_y+1] = onoff;
-        break;
+            case 's':
+            tet[x+1][y] = onoff;
+            tet[x][y+1] = onoff;
+            tet[x-1][y+1] = onoff;
+            break;
+            
+            case 'j':
+            tet[x][y-1] = onoff;
+            tet[x][y+1] = onoff;
+            tet[x-1][y+1] = onoff;
+            break;
 
-        case 'l':
-        tet[core_x][core_y-1] = onoff;
-        tet[core_x][core_y+1] = onoff;
-        tet[core_x+1][core_y+1] = onoff;
-        break;
+            case 'l':
+            tet[x][y-1] = onoff;
+            tet[x][y+1] = onoff;
+            tet[x+1][y+1] = onoff;
+            break;
 
-        case 't':
-        tet[core_x][core_y-1] = onoff;
-        tet[core_x-1][core_y] = onoff;
-        tet[core_x+1][core_y] = onoff;
-        break;
+            case 't':
+            tet[x][y-1] = onoff;
+            tet[x-1][y] = onoff;
+            tet[x+1][y] = onoff;
+            break;
+        }
+        for(int i = 0; i< rot; i++) {
+            // + change
+            int first = tet[x][y+1];
+            tet[x][y+1] = tet[x+1][y];
+            tet[x+1][y] = tet[x][y-1];
+            tet[x][y-1] = tet[x-1][y];
+            tet[x-1][y] = first;
+
+            // X change
+            int second = tet[x-1][y-1];
+            tet[x-1][y-1] = tet[x-1][y+1];
+            tet[x-1][y+1] = tet[x+1][y+1];
+            tet[x+1][y+1] = tet[x+1][y-1];
+            tet[x+1][y-1] = second;
+
+        }
+    }else if (onoff == Off){
+        for(int i = x-1; i<=x+1;i++){
+            for(int j = y-1; j <= y+1; j++){
+                if(tet[i][j] == 1) {
+                    tet[i][j] = 0;
+                }
+            }
+        }
     }
-
+    rotation = rot;
 }
 
 int Tetris::check_sum() {
@@ -154,7 +188,46 @@ int Tetris::check_sum() {
 }
 
 void Tetris::up_arrow() {   // rotation
+    block(Off);
+    rotnum++;
+    // int check = check_sum();
+    // int subtet[width][height];
+    // for(int i = 0; i < height; i++) {
+    //     for(int j = 0; j < width; j++) {
+    //         subtet[j][i] = tet[j][i];    
+    //     }
+    // }
+    block(On);
+    // if(block_type = 'i') {
+
+    // }
+    // // + change
+    // int first = tet[core_x][core_y+1];
+    // tet[core_x][core_y+1] = tet[core_x+1][core_y];
+    // tet[core_x+1][core_y] = tet[core_x][core_y-1];
+    // tet[core_x][core_y-1] = tet[core_x-1][core_y];
+    // tet[core_x-1][core_y] = first;
+
+    // // X change
+    // int second = tet[core_x-1][core_y-1];
+    // tet[core_x-1][core_y-1] = tet[core_x-1][core_y+1];
+    // tet[core_x-1][core_y+1] = tet[core_x+1][core_y+1];
+    // tet[core_x+1][core_y+1] = tet[core_x+1][core_y-1];
+    // tet[core_x+1][core_y-1] = second;
     
+    
+    // if(check != check_sum()) {
+    //     block(Off);
+    //     for(int i = 0; i < height; i++) {
+    //         for(int j = 0; j < width; j++) {
+    //             tet[j][i] = subtet[j][i];    
+    //         }
+    //     }
+    //     block(On);
+    // }
+    
+    
+
 }
 
 void Tetris::down_arrow() {
@@ -163,48 +236,51 @@ void Tetris::down_arrow() {
 
 void Tetris::left_arrow() {
     int check = check_sum();
-    block(rotation, Off);
+    block(Off);
     core_x -= 1;
-    block(rotation, On);
+    block(On);
     if(check != check_sum()) {
-        block(rotation,Off);
+        block(Off);
         core_x +=1;
+        block(On);
     }
-    block(rotation, On);
+    
     
 }
 
 void Tetris::right_arrow() {
     int check = check_sum();
-    block(rotation, Off);
+    block(Off);
     core_x += 1;
-    block(rotation, On);
+    block(On);
     if(check != check_sum()) {
-        block(rotation, Off);
+        block(Off);
         core_x -=1;
+        block(On);
     }
-    block(rotation, On);
+    
 }
 
 void Tetris::down_natural() {
     int check = check_sum();
-    block(rotation, Off);
+    block(Off);
     core_y += 1;
-    block(rotation, On);
+    block(On);
     if(check != check_sum()) {
-        block(rotation, Off);
+        block(Off);
         core_y -=1;
+        block(On);
     }
-    block(rotation, On);
+    
 }
 
 int main() {
     system("cls");
     Tetris tet;
     tet.set_edge();
-    tet.show_stat_sym();
     tet.gen_block('j');
-    tet.block(0,On);
+    tet.block(On);
+    tet.show_stat_sym();
 
     int input;
 
@@ -217,7 +293,7 @@ int main() {
             input = _getch();
         }
         if (input == UP){
-            
+            tet.up_arrow();
         }
         else if (input == DOWN) {
             tet.down_natural();
