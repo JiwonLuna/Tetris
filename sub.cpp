@@ -57,6 +57,8 @@ class Tetris {
     void left_arrow();
     void right_arrow();
     void down_natural();
+    void drop();
+
     int nextblock;
     int gotonextblock();
 
@@ -440,6 +442,15 @@ void Tetris::down_natural() {
     
 }
 
+void Tetris::drop() {       //반복의 홋수에 대해 변수를 통해 조절할 필요가 있음.
+//하강 정도에 따라 반복횟수를 조절하면 좋을 듯.
+    for (int i = 0; i < 22; i++) {
+        down_natural();
+        nextblock = 0;
+    }
+    down_natural();
+}
+
 int Tetris::gotonextblock() {
     return nextblock;
 }
@@ -506,7 +517,12 @@ int main() {
             else if (input == LEFT) {
                 tet.left_arrow();
             }
+
+            if(getch()==' ') {
+                tet.drop();
+            }
         }
+
 
         if(down_num==20000){
             tet.down_natural();
