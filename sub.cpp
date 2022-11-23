@@ -26,24 +26,29 @@ class Tetris {
     int core_y;     // 블럭의 코어 y좌표 1~23 (위 -> 아래)
     int rotation;   // 회전 상태를 나타내는 인자 1~4
     int rotnum;     // 한 블럭이 낙하 전까지 회전한 횟수
-    
 
     int z[2][4] = {0};
-
+    int prev_block[2][4] = {0};
 
     public:
     Tetris();
     
 
     int tet[width][height] = { 0 };
+    int prev_tet[width][height] = { 0 };
+    void save_prev_tet();
+    void load_prev_tet();
+
     void show_stat_num();
     void show_stat_sym();
     void gotoxy(short x, short y);
+    void cursor_hide();
     void show_video();
     void set_edge();
     void gen_block();
     void set_block();
     void block_switch(int onoff);
+    void correction_switch(int onoff);
     
     int check_sum();
     // 블럭이 존재해야하는 공간(경계)은 width 1~10, height 1~22.
@@ -52,12 +57,36 @@ class Tetris {
     void left_arrow();
     void right_arrow();
     void down_natural();
+    int nextblock;
+    int gotonextblock();
+
+    void check_clear_line();
+
 };
 
 Tetris::Tetris() {
     core_x = startx;
     core_y = starty;
     rotation = 0;
+    nextblock = 0;
+}
+
+void Tetris::save_prev_tet() {
+    for (int i = 0; i < height; i++) {
+        for (int j = 0; j < width; j++) {
+            prev_tet[j][i] = tet[j][i];
+        }
+    }
+}
+
+void Tetris::load_prev_tet() {
+    for (int i = 0; i < height; i++) {
+        for (int j = 0; j < width; j++) {
+            tet[j][i] = prev_tet[j][i];
+        }
+    }
+    system("cls");
+    show_stat_sym();
 }
 
 void Tetris::show_stat_num() {
@@ -91,18 +120,26 @@ void Tetris::gotoxy(short x, short y) {
     SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
 }    
 
-void Tetris::show_video() {
+void Tetris::cursor_hide() {
+    CONSOLE_CURSOR_INFO cursorInfo = { 0, };
+    // cursorInfo.dwSize = 1; //커서 굵기 (1 ~ 100)
+    cursorInfo.bVisible = FALSE; //커서 Visible TRUE(보임) FALSE(숨김)
+    SetConsoleCursorInfo(GetStdHandle(STD_OUTPUT_HANDLE), &cursorInfo);
+}
+
+void Tetris::show_video() { // 블럭의 좌표가 가리키는 곳으로 가서 변화된 상황을 표시해준다.
     for(int b = 0; b < 4; b++) {
         gotoxy(2*z[0][b], z[1][b]);
         if(z[0][b] == 0 || z[0][b] == 11 || z[1][b] == height-1){
         }else {
             if(tet[z[0][b]][z[1][b]]==0){
-            std::cout << "□";
+            std::cout << empty;
             }else if(tet[z[0][b]][z[1][b]]==1){
-                std::cout << "■";
+                std::cout << full;
             }
         }
     }
+    cursor_hide();
 }
 
 void Tetris::set_edge() {
@@ -211,13 +248,28 @@ void Tetris::set_block() {
 }
 
 void Tetris::block_switch(int onoff) {
-    int x = core_x;
-    int y = core_y;
-    int rot = rotation;
-            
+   
     for (int b = 0; b<4;b++){
         tet[z[0][b]][z[1][b]] = onoff;
     }
+    set_edge();
+    show_video();
+}
+
+void Tetris::correction_switch(int onoff) {
+   
+    for (int b = 0; b<4;b++){
+        if(onoff == On){
+            if(tet[z[0][b]][z[1][b]] == Off){
+                tet[z[0][b]][z[1][b]] = onoff;
+            }
+        }else if (onoff == Off){
+            if(tet[z[0][b]][z[1][b]] == On){
+                tet[z[0][b]][z[1][b]] = onoff;
+            }
+        }
+    }
+    set_edge();
     show_video();
 }
 
@@ -304,7 +356,7 @@ void Tetris::up_arrow() {   // rotation
         block_switch(On);
         
         if(check != check_sum()) {
-            block_switch(Off);
+            correction_switch(Off);
             
             for(int b = 0; b < 2; b++) {
                 for (int c = 0; c < 4; c++){
@@ -322,6 +374,7 @@ void Tetris::down_arrow() {
 }
 
 void Tetris::left_arrow() {
+    nextblock = 0;
     int check = check_sum();
     block_switch(Off);
     
@@ -331,8 +384,8 @@ void Tetris::left_arrow() {
     block_switch(On);
     
     if(check != check_sum()) {
-        block_switch(Off);
-        
+        correction_switch(Off);
+        load_prev_tet();
         for(int b = 0; b<4; b++){
         z[0][b]++;
         }
@@ -345,6 +398,7 @@ void Tetris::left_arrow() {
 }
 
 void Tetris::right_arrow() {
+    nextblock = 0;
     int check = check_sum();
     block_switch(Off);
     for(int b = 0; b<4; b++){
@@ -353,7 +407,8 @@ void Tetris::right_arrow() {
     
     block_switch(On);
     if(check != check_sum()) {
-        block_switch(Off);
+        correction_switch(Off);
+        load_prev_tet();
         for(int b = 0; b<4; b++){
         z[0][b]--;
         }
@@ -372,23 +427,54 @@ void Tetris::down_natural() {
     block_switch(On);
     
     if(check != check_sum()) {
-        block_switch(Off);
+        nextblock++;
+        correction_switch(Off);
+        load_prev_tet();
         for(int b = 0; b<4; b++){
         z[1][b]--;
         }
         set_edge();
         block_switch(On);
+        gotonextblock();
     }
     
 }
 
+int Tetris::gotonextblock() {
+    return nextblock;
+}
+
+void Tetris::check_clear_line() {
+    int sum[height] = {0};
+    
+    for (int j = 0; j < height-1; j++) {
+        for(int i = 1; i < width-1; i++){
+            sum[j] += tet[i][j];
+        }    
+    }
+    for(int j = 0; j < height-1; j++) {
+        if (sum[j] == 10){ // 한 줄이 꽉 찼다면, 그 줄을 지우고 그 줄 위에 있는 모든 블럭을 한 칸 아래로 내려라.
+            for(int b = j; b > 0; b--){
+                for(int i = 1; i < width-1; i++){
+                    tet[i][b] = 0;
+                    tet[i][b] = tet[i][b-1];
+                }
+            }
+        }
+    }
+}
+
 int main() {
-    system("cls");
+
     Tetris tet;
+    system("cls");
+    
+    nextblock:   
     tet.set_edge();
     tet.gen_block();
     tet.set_block();
     tet.show_stat_sym();
+    tet.save_prev_tet();
     tet.block_switch(On);
 
     int input;
@@ -401,19 +487,17 @@ int main() {
         // system("cls");
         down_num++;
 
-
         if(kbhit()) {
             input = _getch();
             
-
             if (input ==224){
-                
                 input = _getch();
             }
             if (input == UP){
                 tet.up_arrow();
             }
             else if (input == DOWN) {
+                down_num--;
                 tet.down_natural();
             }
             else if (input == RIGHT) {
@@ -425,11 +509,15 @@ int main() {
         }
 
         if(down_num==20000){
-            
             tet.down_natural();
-
             down_num = 0;
+        }
 
+        if(tet.nextblock == 1) {
+            tet.nextblock = 0;
+            tet.check_clear_line();
+            system("cls");
+            goto nextblock;
         }
 
         
