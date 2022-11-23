@@ -1,6 +1,8 @@
 #include <iostream>
 #include <conio.h>
 #include <Windows.h>
+#include <stdlib.h>
+#include <time.h>
 
 #define width 12
 #define height 26
@@ -11,7 +13,7 @@
 #define On 1
 #define Off 0
 #define startx 5
-#define starty 2
+#define starty 3
 
 
 // 배열에서 움직임을 표현하고 있기에 일반적인 그래픽과는 다르다는 점을 항상 명심하자.
@@ -24,16 +26,22 @@ class Tetris {
     int core_y;     // 블럭의 코어 y좌표 1~23 (위 -> 아래)
     int rotation;   // 회전 상태를 나타내는 인자 1~4
     int rotnum;     // 한 블럭이 낙하 전까지 회전한 횟수
+    
+
+    int z[2][4] = {0};
+
 
     public:
     Tetris();
     
+
     int tet[width][height] = { 0 };
     void show_stat_num();
     void show_stat_sym();
     void set_edge();
-    void gen_block(char type);
-    void block(int onoff);
+    void gen_block();
+    void set_block();
+    void block_switch(int onoff);
     
     int check_sum();
     // 블럭이 존재해야하는 공간(경계)은 width 1~10, height 1~22.
@@ -45,8 +53,8 @@ class Tetris {
 };
 
 Tetris::Tetris() {
-    core_x = 5;
-    core_y = 2;
+    core_x = startx;
+    core_y = starty;
     rotation = 0;
 }
 
@@ -84,103 +92,115 @@ void Tetris::set_edge() {
     }
 }
 
-void Tetris::gen_block(char type) {
-    block_type = type;
-    core_x = startx;
-    core_y = starty;
+void Tetris::gen_block() {
+    srand(time(NULL));
+    int a = rand() % 7;
+    char types[7] = {'i', 'o', 'z', 's', 'j', 'l', 't'};
+    block_type = types[a];
+    // std::cout << block_type << std::endl;
     rotation = 0;
     rotnum = 0;
 }
 
-void Tetris::block(int onoff) {
-    
-    int l;
-    int r;
-    int u;
-    int d;
-    int x = core_x;
-    int y = core_y;
-    int rot = rotnum % 4;
-    
-    if(onoff == On){
-        tet[x][y] = onoff;
-
-        switch(block_type) {
+void Tetris::set_block() {
+    switch(block_type) {
             
-            case 'i':
-            tet[x][y-1] = onoff;
-            tet[x][y+1] = onoff;
-            tet[x][y+2] = onoff;
-            break;
+            case 'i': 
+            z[0][0] = core_x;
+            z[1][0] = core_y;
+            z[0][1] = core_x;
+            z[1][1] = core_y-1;
+            z[0][2] = core_x;
+            z[1][2] = core_y+1;
+            z[0][3] = core_x;
+            z[1][3] = core_y+2;
 
-            case 'o':
-            tet[x+1][y] = onoff;
-            tet[x][y-1] = onoff;
-            tet[x+1][y-1] = onoff;
             break;
-
-            case 'z':
-            tet[x-1][y] = onoff;
-            tet[x][y+1] = onoff;
-            tet[x+1][y+1] = onoff;
+            
+            case 'o': 
+            z[0][0] = core_x;
+            z[1][0] = core_y;
+            z[0][1] = core_x+1;
+            z[1][1] = core_y;
+            z[0][2] = core_x;
+            z[1][2] = core_y-1;
+            z[0][3] = core_x+1;
+            z[1][3] = core_y-1;
             break;
+            
 
-            case 's':
-            tet[x+1][y] = onoff;
-            tet[x][y+1] = onoff;
-            tet[x-1][y+1] = onoff;
+            case 'z': 
+            z[0][0] = core_x;
+            z[1][0] = core_y;
+            z[0][1] = core_x-1;
+            z[1][1] = core_y;
+            z[0][2] = core_x;
+            z[1][2] = core_y+1;
+            z[0][3] = core_x+1;
+            z[1][3] = core_y+1;
+            break;
+            
+
+            case 's': 
+            z[0][0] = core_x;
+            z[1][0] = core_y;
+            z[0][1] = core_x+1;
+            z[1][1] = core_y;
+            z[0][2] = core_x;
+            z[1][2] = core_y+1;
+            z[0][3] = core_x-1;
+            z[1][3] = core_y+1;
             break;
             
             case 'j':
-            tet[x][y-1] = onoff;
-            tet[x][y+1] = onoff;
-            tet[x-1][y+1] = onoff;
+            z[0][0] = core_x;
+            z[1][0] = core_y;
+            z[0][1] = core_x;
+            z[1][1] = core_y-1;
+            z[0][2] = core_x;
+            z[1][2] = core_y+1;
+            z[0][3] = core_x-1;
+            z[1][3] = core_y+1;
             break;
 
-            case 'l':
-            tet[x][y-1] = onoff;
-            tet[x][y+1] = onoff;
-            tet[x+1][y+1] = onoff;
+            case 'l':            
+            z[0][0] = core_x;
+            z[1][0] = core_y;
+            z[0][1] = core_x;
+            z[1][1] = core_y-1;
+            z[0][2] = core_x;
+            z[1][2] = core_y+1;
+            z[0][3] = core_x+1;
+            z[1][3] = core_y+1;
             break;
 
             case 't':
-            tet[x][y-1] = onoff;
-            tet[x-1][y] = onoff;
-            tet[x+1][y] = onoff;
+            z[0][0] = core_x;
+            z[1][0] = core_y;
+            z[0][1] = core_x;
+            z[1][1] = core_y-1;
+            z[0][2] = core_x-1;
+            z[1][2] = core_y;
+            z[0][3] = core_x+1;
+            z[1][3] = core_y;
             break;
         }
-        for(int i = 0; i< rot; i++) {
-            // + change
-            int first = tet[x][y+1];
-            tet[x][y+1] = tet[x+1][y];
-            tet[x+1][y] = tet[x][y-1];
-            tet[x][y-1] = tet[x-1][y];
-            tet[x-1][y] = first;
+}
 
-            // X change
-            int second = tet[x-1][y-1];
-            tet[x-1][y-1] = tet[x-1][y+1];
-            tet[x-1][y+1] = tet[x+1][y+1];
-            tet[x+1][y+1] = tet[x+1][y-1];
-            tet[x+1][y-1] = second;
-
-        }
-    }else if (onoff == Off){
-        for(int i = x-1; i<=x+1;i++){
-            for(int j = y-1; j <= y+1; j++){
-                if(tet[i][j] == 1) {
-                    tet[i][j] = 0;
-                }
-            }
-        }
+void Tetris::block_switch(int onoff) {
+    int x = core_x;
+    int y = core_y;
+    int rot = rotation;
+            
+    for (int b = 0; b<4;b++){
+        tet[z[0][b]][z[1][b]] = onoff;
     }
-    rotation = rot;
 }
 
 int Tetris::check_sum() {
     int sum = 0;
-    for(int i = 0; i < height; i++) {
-        for(int j = 0; j < width; j++) {
+    for(int i = 0; i < height-1; i++) {
+        for(int j = 1; j < width-1; j++) {
             sum += tet[j][i];
         }
     }
@@ -188,46 +208,85 @@ int Tetris::check_sum() {
 }
 
 void Tetris::up_arrow() {   // rotation
-    block(Off);
-    rotnum++;
-    // int check = check_sum();
-    // int subtet[width][height];
-    // for(int i = 0; i < height; i++) {
-    //     for(int j = 0; j < width; j++) {
-    //         subtet[j][i] = tet[j][i];    
-    //     }
-    // }
-    block(On);
-    // if(block_type = 'i') {
+    if(block_type != 'o'){
+        int check = check_sum();
+        block_switch(Off);
+        int save[2][4]={0};
 
-    // }
-    // // + change
-    // int first = tet[core_x][core_y+1];
-    // tet[core_x][core_y+1] = tet[core_x+1][core_y];
-    // tet[core_x+1][core_y] = tet[core_x][core_y-1];
-    // tet[core_x][core_y-1] = tet[core_x-1][core_y];
-    // tet[core_x-1][core_y] = first;
+        for(int b = 0; b < 2; b++) {
+            for (int c = 0; c < 4; c++){
+                save[b][c] = z[b][c];
+            }
+        }
+        for (int b = 1; b<4;b++){
+            // + -shape
+            if(z[0][b]==z[0][0]-1 && z[1][b] == z[1][0]){   // 코어 왼쪽 칸
+                z[0][b]++;
+                z[1][b]--;
+                //좌표값 오른쪽 위로 이동
+            }else if(z[0][b]==z[0][0] && z[1][b] == z[1][0]-1){  // 코어 위쪽 칸
+                z[0][b]++;
+                z[1][b]++;
+                //좌표값 오른쪽 아래로 이동
+            }else if(z[0][b]==z[0][0]+1 && z[1][b] == z[1][0]){  // 코어 오른쪽 칸
+                z[0][b]--;
+                z[1][b]++;
+                //좌표값 왼쪽쪽 아래로 이동
+            }else if(z[0][b]==z[0][0] && z[1][b] == z[1][0]+1){  // 코어 아래쪽 칸
+                z[0][b]--;
+                z[1][b]--;
+                //좌표값 오른쪽 아래로 이동
+            }
+            
+            // X-shape
+            else if(z[0][b]==z[0][0]-1 && z[1][b] == z[1][0]-1){  // 코어 왼쪽위 칸
+                z[0][b] += 2;
+                // z[1][b]
+                //x좌표값 오른쪽으로 2칸 이동
+            }else if(z[0][b]==z[0][0]+1 && z[1][b] == z[1][0]-1){  // 코어 오른쪽위 칸
+                // z[0][b] += 2;
+                z[1][b] += 2;
+                //y좌표값 아래쪽으로 2칸 이동
+            }else if(z[0][b]==z[0][0]+1 && z[1][b] == z[1][0]+1){  // 코어 오른쪽아래 칸
+                z[0][b] -= 2;
+                // z[1][b]
+                //x좌표값 왼쪽으로 2칸 이동
+            }else if(z[0][b]==z[0][0]-1 && z[1][b] == z[1][0]+1){  // 코어 왼쪽아래 칸
+                // z[0][b] += 2;
+                z[1][b] -= 2;
+                //y좌표값 위쪽으로 2칸 이동
+            }
 
-    // // X change
-    // int second = tet[core_x-1][core_y-1];
-    // tet[core_x-1][core_y-1] = tet[core_x-1][core_y+1];
-    // tet[core_x-1][core_y+1] = tet[core_x+1][core_y+1];
-    // tet[core_x+1][core_y+1] = tet[core_x+1][core_y-1];
-    // tet[core_x+1][core_y-1] = second;
-    
-    
-    // if(check != check_sum()) {
-    //     block(Off);
-    //     for(int i = 0; i < height; i++) {
-    //         for(int j = 0; j < width; j++) {
-    //             tet[j][i] = subtet[j][i];    
-    //         }
-    //     }
-    //     block(On);
-    // }
-    
-    
-
+            // Just for i-type block
+            else if(z[0][b]==z[0][0]-2 && z[1][b] == z[1][0]){  // 코어 2칸 왼쪽 칸
+                z[0][b] += 2;
+                z[1][b] -= 2;
+                //x좌표값 오른쪽으로 2칸 이동, y좌표값 위쪽으로 2칸 이동
+            }else if(z[0][b]==z[0][0] && z[1][b] == z[1][0]-2){  // 코어 2칸 위쪽 칸
+                z[0][b] += 2;
+                z[1][b] += 2;
+                //x좌표값 오른쪽으로 2칸 이동, y좌표값 아래쪽으로 2칸 이동
+            }else if(z[0][b]==z[0][0]+2 && z[1][b] == z[1][0]){  // 코어 2칸 오른쪽 칸
+                z[0][b] -= 2;
+                z[1][b] += 2;
+                //x좌표값 왼쪽으로 2칸 이동, y좌표값 아래쪽으로 2칸 이동
+            }else if(z[0][b]==z[0][0] && z[1][b] == z[1][0]+2){  // 코어 2칸 아래쪽 칸
+                z[0][b] -= 2;
+                z[1][b] -= 2;
+                //x좌표값 왼쪽으로 2칸 이동, y좌표값 위쪽으로 2칸 이동
+            }
+        }
+        block_switch(On);
+        if(check != check_sum()) {
+            block_switch(Off);
+            for(int b = 0; b < 2; b++) {
+                for (int c = 0; c < 4; c++){
+                    z[b][c] = save[b][c];
+                }
+            }
+            block_switch(On);
+        }
+    }
 }
 
 void Tetris::down_arrow() {
@@ -236,13 +295,17 @@ void Tetris::down_arrow() {
 
 void Tetris::left_arrow() {
     int check = check_sum();
-    block(Off);
-    core_x -= 1;
-    block(On);
+    block_switch(Off);
+    for(int b = 0; b<4; b++){
+        z[0][b]--;
+    }
+    block_switch(On);
     if(check != check_sum()) {
-        block(Off);
-        core_x +=1;
-        block(On);
+        block_switch(Off);
+        for(int b = 0; b<4; b++){
+        z[0][b]++;
+        }
+        block_switch(On);
     }
     
     
@@ -250,26 +313,37 @@ void Tetris::left_arrow() {
 
 void Tetris::right_arrow() {
     int check = check_sum();
-    block(Off);
-    core_x += 1;
-    block(On);
+    block_switch(Off);
+    for(int b = 0; b<4; b++){
+        z[0][b]++;
+    }
+    
+    block_switch(On);
     if(check != check_sum()) {
-        block(Off);
-        core_x -=1;
-        block(On);
+        block_switch(Off);
+        for(int b = 0; b<4; b++){
+        z[0][b]--;
+        }
+        block_switch(On);
     }
     
 }
 
 void Tetris::down_natural() {
     int check = check_sum();
-    block(Off);
-    core_y += 1;
-    block(On);
+    block_switch(Off);
+    for(int b = 0; b<4; b++){
+        z[1][b]++;
+    }
+    block_switch(On);
+    
     if(check != check_sum()) {
-        block(Off);
-        core_y -=1;
-        block(On);
+        block_switch(Off);
+        for(int b = 0; b<4; b++){
+        z[1][b]--;
+        }
+        set_edge();
+        block_switch(On);
     }
     
 }
@@ -278,8 +352,9 @@ int main() {
     system("cls");
     Tetris tet;
     tet.set_edge();
-    tet.gen_block('j');
-    tet.block(On);
+    tet.gen_block();
+    tet.set_block();
+    tet.block_switch(On);
     tet.show_stat_sym();
 
     int input;
