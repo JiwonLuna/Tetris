@@ -121,10 +121,10 @@ void Tetris::gotoxy(short x, short y) {
 }    
 
 void Tetris::cursor_hide() {
-    CONSOLE_CURSOR_INFO cursorInfo = { 0, };
-    // cursorInfo.dwSize = 1; //커서 굵기 (1 ~ 100)
-    cursorInfo.bVisible = FALSE; //커서 Visible TRUE(보임) FALSE(숨김)
-    SetConsoleCursorInfo(GetStdHandle(STD_OUTPUT_HANDLE), &cursorInfo);
+    CONSOLE_CURSOR_INFO ConsoleCursor;
+    // ConsoleCursor.dwSize = 1; //커서 굵기 (1 ~ 100)
+    ConsoleCursor.bVisible = false; //커서 Visible TRUE(보임) FALSE(숨김)
+    SetConsoleCursorInfo(GetStdHandle(STD_OUTPUT_HANDLE), &ConsoleCursor);
 }
 
 void Tetris::show_video() { // 블럭의 좌표가 가리키는 곳으로 가서 변화된 상황을 표시해준다.
