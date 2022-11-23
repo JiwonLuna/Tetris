@@ -87,8 +87,17 @@ void Tetris::load_prev_tet() {
             tet[j][i] = prev_tet[j][i];
         }
     }
-    system("cls");
-    show_stat_sym();
+
+    for(int i = 0; i < height; i++){
+        for (int j = 0; j < width; j++) {
+            gotoxy(2*j, i);
+            if(tet[j][i]==0){
+                std::cout << empty;
+            }else if(tet[j][i]==1){
+                std::cout << full;
+            }
+        }
+    }
 }
 
 void Tetris::show_stat_num() {
