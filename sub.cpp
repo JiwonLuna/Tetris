@@ -154,7 +154,7 @@ void Tetris::show_stat_num() {
 }
 
 void Tetris::show_stat_sym() {
-    for(int i = 0; i < height; i++){
+    for(int i = 4; i < height; i++){
         for (int j = 0; j < width; j++) {
             gotoxy(2*j, i);
             if(tet[j][i][0]==0){
@@ -226,8 +226,7 @@ void Tetris::block_color(int type_num) {
 void Tetris::printer() { // 좌표가 가리키는 곳으로 가서 변화된 상황을 표시해준다.
     for(int b = 0; b < 4; b++) {
         gotoxy(2*z[0][b], z[1][b]);
-        if(z[0][b] == 0 || z[0][b] == 11 || z[1][b] == height-1){
-        }else {
+        if(z[1][b]>3){
             if(tet[z[0][b]][z[1][b]][0]==0){
                 block_color(tet[z[0][b]][z[1][b]][1]);
                 std::cout << empty;
@@ -411,7 +410,7 @@ void Tetris::correction_switch(int onoff) {
 }
 
 void Tetris::next_block_indicator(){
-    int start_line = 3;
+    int start_line = 5;
     gotoxy(34, start_line);
     printf("┌─ Next");
     for(int i = 0; i<9; i++) printf("─");
@@ -428,7 +427,7 @@ void Tetris::next_block_indicator(){
     printf("┘");
 
     int indi_coord_x = 21;
-    int indi_coord_y = 7;
+    int indi_coord_y = 9;
     switch(next_block_type) {
             
         case 'i': 
@@ -753,7 +752,7 @@ void Tetris::check_clear_line() {
 }
 
 void Tetris::scorer(){
-    int start_line = 13;
+    int start_line = 15;
     gotoxy(34, start_line);
     printf("┌─ Score");
     for(int i = 0; i<8; i++) printf("─");
@@ -815,9 +814,10 @@ int main() {
 
     if (tet.prohibit == 1) {
         // goto GameOver;
-        system("cls");
         tet.textcolor(7, 0);
+        tet.gotoxy(3, 1);
         std::cout << "GAME OVER" << std::endl;
+        system("PAUSE");
         return 0;
     }
     
