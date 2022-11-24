@@ -15,6 +15,24 @@
 #define startx 5
 #define starty 3
 
+// color상수 지정 
+#define BLACK 0 
+#define BLUE 1 
+#define GREEN 2 
+#define CYAN 3 
+#define RED 4 
+#define MAGENTA 5 
+#define BROWN 6 
+#define LIGHTGRAY 7 
+#define DARKGRAY 8 
+#define LIGHTBLUE 9 
+#define LIGHTGREEN 10 
+#define LIGHTCYAN 11 
+#define LIGHTRED 12 
+#define LIGHTMAGENTA 13 
+#define YELLOW 14 
+#define WHITE 15 
+
 
 // 배열에서 움직임을 표현하고 있기에 일반적인 그래픽과는 다르다는 점을 항상 명심하자.
 
@@ -26,6 +44,7 @@ class Tetris {
     int core_y;     // 블럭의 코어 y좌표 1~23 (위 -> 아래)
     int rotation;   // 회전 상태를 나타내는 인자 1~4
     int rotnum;     // 한 블럭이 낙하 전까지 회전한 횟수
+    int prohibit;   // 블럭의 이동제한을 나타내는 변수
 
     int z[2][4] = {0};
     int prev_block[2][4] = {0};
@@ -43,6 +62,8 @@ class Tetris {
     void show_stat_sym();
     void gotoxy(short x, short y);
     void cursor_hide();
+    void textcolor(int foreground, int background);
+    void block_color();
     void show_video();
     void set_edge();
     void gen_block();
@@ -71,6 +92,7 @@ Tetris::Tetris() {
     core_y = starty;
     rotation = 0;
     nextblock = 0;
+    prohibit = 0;
 }
 
 void Tetris::save_prev_tet() {
@@ -138,14 +160,53 @@ void Tetris::cursor_hide() {
     SetConsoleCursorInfo(GetStdHandle(STD_OUTPUT_HANDLE), &ConsoleCursor);
 }
 
+void Tetris::textcolor(int foreground, int background) { 
+    int color=foreground+background*16; 
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), color); 
+}
+
+void Tetris::block_color() {
+    switch(block_type){
+        case 'i':
+        textcolor(9, 0);
+        break;
+        
+        case 'o':
+        textcolor(14, 0);
+        break;
+
+        case 'z':
+        textcolor(4, 0);
+        break;
+
+        case 's':
+        textcolor(10, 0);
+        break;
+
+        case 'j':
+        textcolor(1, 0);
+        break;
+
+        case 'l':
+        textcolor(12, 0);
+        break;
+
+        case 't':
+        textcolor(5, 0);
+        break;
+    }
+}
+
 void Tetris::show_video() { // 블럭의 좌표가 가리키는 곳으로 가서 변화된 상황을 표시해준다.
     for(int b = 0; b < 4; b++) {
         gotoxy(2*z[0][b], z[1][b]);
         if(z[0][b] == 0 || z[0][b] == 11 || z[1][b] == height-1){
         }else {
             if(tet[z[0][b]][z[1][b]]==0){
-            std::cout << empty;
+                // textcolor(15, 0);
+                std::cout << empty;
             }else if(tet[z[0][b]][z[1][b]]==1){
+                // block_color()sub;
                 std::cout << full;
             }
         }
@@ -259,11 +320,30 @@ void Tetris::set_block() {
 }
 
 void Tetris::block_switch(int onoff) {
-   
+    int sum = 0;
     for (int b = 0; b<4;b++){
-        tet[z[0][b]][z[1][b]] = onoff;
+        sum += tet[z[0][b]][z[1][b]];
     }
-    set_edge();
+    if (onoff == On){
+        if (sum == 0) {
+            for (int b = 0; b<4;b++){
+                tet[z[0][b]][z[1][b]] = onoff;
+            }
+            prohibit = 0;
+        }else {
+            prohibit = 1;
+        }
+    }else if(onoff == Off){
+        if (sum == 4) {
+            for (int b = 0; b<4;b++){
+                tet[z[0][b]][z[1][b]] = onoff;
+            }
+            prohibit = 0;
+        }else {
+            prohibit = 1;
+        }
+    }
+    // set_edge();
     show_video();
 }
 
@@ -366,17 +446,25 @@ void Tetris::up_arrow() {   // rotation
         }
         block_switch(On);
         
-        if(check != check_sum()) {
-            correction_switch(Off);
-            
+        if (prohibit ==1) {
             for(int b = 0; b < 2; b++) {
                 for (int c = 0; c < 4; c++){
                     z[b][c] = save[b][c];
                 }
             }
             block_switch(On);
-            
         }
+        // if(check != check_sum()) {
+        //     correction_switch(Off);
+            
+        //     for(int b = 0; b < 2; b++) {
+        //         for (int c = 0; c < 4; c++){
+        //             z[b][c] = save[b][c];
+        //         }
+        //     }
+        //     block_switch(On);
+            
+        // }
     }
 }
 
@@ -392,18 +480,24 @@ void Tetris::left_arrow() {
     for(int b = 0; b<4; b++){
         z[0][b]--;
     }
-    block_switch(On);
     
-    if(check != check_sum()) {
-        correction_switch(Off);
-        load_prev_tet();
+    block_switch(On);
+    if (prohibit ==1) {
         for(int b = 0; b<4; b++){
         z[0][b]++;
         }
-        set_edge();
         block_switch(On);
-        
     }
+    // if(check != check_sum()) {
+    //     correction_switch(Off);
+    //     load_prev_tet();
+    //     for(int b = 0; b<4; b++){
+    //     z[0][b]++;
+    //     }
+    //     set_edge();
+    //     block_switch(On);
+        
+    // }
     
     
 }
@@ -417,15 +511,22 @@ void Tetris::right_arrow() {
     }
     
     block_switch(On);
-    if(check != check_sum()) {
-        correction_switch(Off);
-        load_prev_tet();
+    if(prohibit ==1) {
         for(int b = 0; b<4; b++){
         z[0][b]--;
         }
-        set_edge();
         block_switch(On);
     }
+
+    // if(check != check_sum()) {
+    //     correction_switch(Off);
+    //     load_prev_tet();
+    //     for(int b = 0; b<4; b++){
+    //     z[0][b]--;
+    //     }
+    //     set_edge();
+    //     block_switch(On);
+    // }
     
 }
 
@@ -437,17 +538,26 @@ void Tetris::down_natural() {
     }
     block_switch(On);
     
-    if(check != check_sum()) {
+    if (prohibit ==1) {
         nextblock++;
-        correction_switch(Off);
-        load_prev_tet();
         for(int b = 0; b<4; b++){
         z[1][b]--;
         }
-        set_edge();
         block_switch(On);
         gotonextblock();
     }
+
+    // if(check != check_sum()) {
+    //     nextblock++;
+    //     correction_switch(Off);
+    //     load_prev_tet();
+    //     for(int b = 0; b<4; b++){
+    //     z[1][b]--;
+    //     }
+    //     set_edge();
+    //     block_switch(On);
+    //     gotonextblock();
+    // }
     
 }
 
@@ -533,7 +643,7 @@ int main() {
         }
 
 
-        if(down_num==20000){
+        if(down_num==10000){
             tet.down_natural();
             down_num = 0;
         }
