@@ -40,21 +40,28 @@ class Tetris {
     const char* full = "■";
     const char* empty = "□";
     char block_type;
+    int block_type_num;
+    char next_block_type;
+    int next_block_type_num;
     int core_x;     // 블럭의 코어 x좌표 1~10 (왼쪽 -> 오른쪽)
     int core_y;     // 블럭의 코어 y좌표 1~23 (위 -> 아래)
     int rotation;   // 회전 상태를 나타내는 인자 1~4
     int rotnum;     // 한 블럭이 낙하 전까지 회전한 횟수
     int prohibit;   // 블럭의 이동제한을 나타내는 변수
 
-    int z[2][4] = {0};
-    int prev_block[2][4] = {0};
+    int score;
+
+    int z[2][4] = {0};      // 현재 블럭
+    int next_block_z[2][4] = {0};
 
     public:
     Tetris();
     
 
-    int tet[width][height] = { 0 };
-    int prev_tet[width][height] = { 0 };
+    int tet[width][height][2] = { 0 };  
+    // 3번째 인덱스는 색깔 정보 저장용
+    // tet[width][height][0] : 유무 확인용, tet[width][height][1] : 색깔 정보(block_type_num) 저장.
+    int prev_tet[width][height][2] = { 0 };
     void save_prev_tet();
     void load_prev_tet();
 
@@ -63,14 +70,17 @@ class Tetris {
     void gotoxy(short x, short y);
     void cursor_hide();
     void textcolor(int foreground, int background);
-    void block_color();
-    void show_video();
+    void block_color(int type_num);
+    void printer();
     void set_edge();
+    void gen_first_block();
     void gen_block();
     void set_block();
     void block_switch(int onoff);
     void correction_switch(int onoff);
-    
+    void next_block_indicator();
+    void next2present();
+
     int check_sum();
     // 블럭이 존재해야하는 공간(경계)은 width 1~10, height 1~22.
     void up_arrow();
@@ -80,25 +90,32 @@ class Tetris {
     void down_natural();
     void drop();
 
-    int nextblock;
+    int next_block_index;
     int gotonextblock();
 
     void check_clear_line();
 
+    void scorer();
+    void control_level();
 };
 
 Tetris::Tetris() {
     core_x = startx;
     core_y = starty;
     rotation = 0;
-    nextblock = 0;
+    next_block_index = 0;
     prohibit = 0;
+    block_type_num = 0;
+    next_block_type_num = 0;
+    score = 0;
 }
 
 void Tetris::save_prev_tet() {
     for (int i = 0; i < height; i++) {
         for (int j = 0; j < width; j++) {
-            prev_tet[j][i] = tet[j][i];
+            for (int k = 0; k < 2; k++){
+                prev_tet[j][i][k] = tet[j][i][k];
+            }
         }
     }
 }
@@ -106,16 +123,18 @@ void Tetris::save_prev_tet() {
 void Tetris::load_prev_tet() {
     for (int i = 0; i < height; i++) {
         for (int j = 0; j < width; j++) {
-            tet[j][i] = prev_tet[j][i];
+            for (int k = 0; k < 2; k++){
+                tet[j][i][k] = prev_tet[j][i][k];
+            }
         }
     }
 
     for(int i = 0; i < height; i++){
         for (int j = 0; j < width; j++) {
             gotoxy(2*j, i);
-            if(tet[j][i]==0){
+            if(tet[j][i][0]==0){
                 std::cout << empty;
-            }else if(tet[j][i]==1){
+            }else if(tet[j][i][0]==1){
                 std::cout << full;
             }
         }
@@ -125,7 +144,7 @@ void Tetris::load_prev_tet() {
 void Tetris::show_stat_num() {
     for (int i = 0; i < height; i++) {
         for (int j = 0; j < width; j++) {
-            std::cout << tet[j][i];
+            std::cout << tet[j][i][0];
         }
         std::cout << std::endl;
     }
@@ -135,9 +154,11 @@ void Tetris::show_stat_sym() {
     for(int i = 0; i < height; i++){
         for (int j = 0; j < width; j++) {
             gotoxy(2*j, i);
-            if(tet[j][i]==0){
+            if(tet[j][i][0]==0){
+                block_color(tet[j][i][1]);
                 std::cout << empty;
-            }else if(tet[j][i]==1){
+            }else if(tet[j][i][0] == 1){
+                block_color(tet[j][i][1]);
                 std::cout << full;
             }
         }
@@ -163,48 +184,52 @@ void Tetris::textcolor(int foreground, int background) {
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), color); 
 }
 
-void Tetris::block_color() {
-    switch(block_type){
-        case 'i':
+void Tetris::block_color(int type_num) {
+    switch(type_num){
+        case 0: // 공백
+        textcolor(7, 0);
+        break;
+        
+        case 1: //'i'
         textcolor(9, 0);
         break;
         
-        case 'o':
+        case 2: // 'o'
         textcolor(14, 0);
         break;
 
-        case 'z':
+        case 3: //'z'
         textcolor(4, 0);
         break;
 
-        case 's':
+        case 4: //'s'
         textcolor(10, 0);
         break;
 
-        case 'j':
+        case 5: //'j'
         textcolor(1, 0);
         break;
 
-        case 'l':
+        case 6: //'l'
         textcolor(12, 0);
         break;
 
-        case 't':
+        case 7: //'t'
         textcolor(5, 0);
         break;
     }
 }
 
-void Tetris::show_video() { // 블럭의 좌표가 가리키는 곳으로 가서 변화된 상황을 표시해준다.
+void Tetris::printer() { // 좌표가 가리키는 곳으로 가서 변화된 상황을 표시해준다.
     for(int b = 0; b < 4; b++) {
         gotoxy(2*z[0][b], z[1][b]);
         if(z[0][b] == 0 || z[0][b] == 11 || z[1][b] == height-1){
         }else {
-            if(tet[z[0][b]][z[1][b]]==0){
-                // textcolor(15, 0);
+            if(tet[z[0][b]][z[1][b]][0]==0){
+                block_color(tet[z[0][b]][z[1][b]][1]);
                 std::cout << empty;
-            }else if(tet[z[0][b]][z[1][b]]==1){
-                // block_color()sub;
+            }else if(tet[z[0][b]][z[1][b]][0]==1){
+                block_color(tet[z[0][b]][z[1][b]][1]);
                 std::cout << full;
             }
         }
@@ -214,22 +239,40 @@ void Tetris::show_video() { // 블럭의 좌표가 가리키는 곳으로 가서 변화된 상황을 
 
 void Tetris::set_edge() {
     for (int i = 0; i < width; i++) {
-        tet[i][height-1] = On;
+        tet[i][height-1][0] = On;
     }
     for (int i = 0; i < height; i++) {
-        tet[0][i] = On;
-        tet[width-1][i] = On;
+        tet[0][i][0] = On;
+        tet[width-1][i][0] = On;
     }
 }
 
-void Tetris::gen_block() {
+void Tetris::gen_first_block() {
     srand(time(NULL));
     int a = rand() % 7;
     char types[7] = {'i', 'o', 'z', 's', 'j', 'l', 't'};
     block_type = types[a];
+    block_type_num = a + 1;
     // std::cout << block_type << std::endl;
     rotation = 0;
     rotnum = 0;
+}
+
+void Tetris::gen_block() {
+
+    srand(time(NULL));
+    int a = rand() % 7;
+    char types[7] = {'i', 'o', 'z', 's', 'j', 'l', 't'};
+    next_block_type = types[a];
+    next_block_type_num = a + 1;
+    // std::cout << block_type << std::endl;
+    rotation = 0;
+    rotnum = 0;
+}
+
+void Tetris::next2present() {
+    block_type = next_block_type;
+    block_type_num = next_block_type_num;
 }
 
 void Tetris::set_block() {
@@ -320,12 +363,13 @@ void Tetris::set_block() {
 void Tetris::block_switch(int onoff) {
     int sum = 0;
     for (int b = 0; b<4;b++){
-        sum += tet[z[0][b]][z[1][b]];
+        sum += tet[z[0][b]][z[1][b]][0];
     }
     if (onoff == On){
         if (sum == 0) {
             for (int b = 0; b<4;b++){
-                tet[z[0][b]][z[1][b]] = onoff;
+                tet[z[0][b]][z[1][b]][0] = onoff;
+                tet[z[0][b]][z[1][b]][1] = block_type_num;
             }
             prohibit = 0;
         }else {
@@ -334,7 +378,8 @@ void Tetris::block_switch(int onoff) {
     }else if(onoff == Off){
         if (sum == 4) {
             for (int b = 0; b<4;b++){
-                tet[z[0][b]][z[1][b]] = onoff;
+                tet[z[0][b]][z[1][b]][0] = onoff;
+                tet[z[0][b]][z[1][b]][1] = 0;
             }
             prohibit = 0;
         }else {
@@ -342,31 +387,142 @@ void Tetris::block_switch(int onoff) {
         }
     }
     // set_edge();
-    show_video();
+    printer();
 }
 
 void Tetris::correction_switch(int onoff) {
    
     for (int b = 0; b<4;b++){
         if(onoff == On){
-            if(tet[z[0][b]][z[1][b]] == Off){
-                tet[z[0][b]][z[1][b]] = onoff;
+            if(tet[z[0][b]][z[1][b]][0] == Off){
+                tet[z[0][b]][z[1][b]][0] = onoff;
             }
         }else if (onoff == Off){
-            if(tet[z[0][b]][z[1][b]] == On){
-                tet[z[0][b]][z[1][b]] = onoff;
+            if(tet[z[0][b]][z[1][b]][0] == On){
+                tet[z[0][b]][z[1][b]][0] = onoff;
             }
         }
     }
     set_edge();
-    show_video();
+    printer();
 }
+
+void Tetris::next_block_indicator(){
+    int start_line = 3;
+    gotoxy(34, start_line);
+    printf("┌─ Next");
+    for(int i = 0; i<9; i++) printf("─");
+    printf("┐");
+    for(int i = 0; i<7; i++){
+        gotoxy(34, i+start_line+1);
+        printf("│");
+        for(int j = 0; j<15; j++) printf(" ");
+        printf("│");
+    }
+    gotoxy(34, start_line+8);
+    printf("└");
+    for(int i = 0; i<15; i++) printf("─");
+    printf("┘");
+
+    int indi_coord_x = 21;
+    int indi_coord_y = 7;
+    switch(next_block_type) {
+            
+        case 'i': 
+        next_block_z[0][0] = indi_coord_x;
+        next_block_z[1][0] = indi_coord_y;
+        next_block_z[0][1] = indi_coord_x;
+        next_block_z[1][1] = indi_coord_y-1;
+        next_block_z[0][2] = indi_coord_x;
+        next_block_z[1][2] = indi_coord_y+1;
+        next_block_z[0][3] = indi_coord_x;
+        next_block_z[1][3] = indi_coord_y+2;
+
+        break;
+        
+        case 'o': 
+        next_block_z[0][0] = indi_coord_x;
+        next_block_z[1][0] = indi_coord_y;
+        next_block_z[0][1] = indi_coord_x+1;
+        next_block_z[1][1] = indi_coord_y;
+        next_block_z[0][2] = indi_coord_x;
+        next_block_z[1][2] = indi_coord_y-1;
+        next_block_z[0][3] = indi_coord_x+1;
+        next_block_z[1][3] = indi_coord_y-1;
+        break;
+        
+
+        case 'z': 
+        next_block_z[0][0] = indi_coord_x;
+        next_block_z[1][0] = indi_coord_y;
+        next_block_z[0][1] = indi_coord_x-1;
+        next_block_z[1][1] = indi_coord_y;
+        next_block_z[0][2] = indi_coord_x;
+        next_block_z[1][2] = indi_coord_y+1;
+        next_block_z[0][3] = indi_coord_x+1;
+        next_block_z[1][3] = indi_coord_y+1;
+        break;
+        
+
+        case 's': 
+        next_block_z[0][0] = indi_coord_x;
+        next_block_z[1][0] = indi_coord_y;
+        next_block_z[0][1] = indi_coord_x+1;
+        next_block_z[1][1] = indi_coord_y;
+        next_block_z[0][2] = indi_coord_x;
+        next_block_z[1][2] = indi_coord_y+1;
+        next_block_z[0][3] = indi_coord_x-1;
+        next_block_z[1][3] = indi_coord_y+1;
+        break;
+        
+        case 'j':
+        next_block_z[0][0] = indi_coord_x;
+        next_block_z[1][0] = indi_coord_y;
+        next_block_z[0][1] = indi_coord_x;
+        next_block_z[1][1] = indi_coord_y-1;
+        next_block_z[0][2] = indi_coord_x;
+        next_block_z[1][2] = indi_coord_y+1;
+        next_block_z[0][3] = indi_coord_x-1;
+        next_block_z[1][3] = indi_coord_y+1;
+        break;
+
+        case 'l':            
+        next_block_z[0][0] = indi_coord_x;
+        next_block_z[1][0] = indi_coord_y;
+        next_block_z[0][1] = indi_coord_x;
+        next_block_z[1][1] = indi_coord_y-1;
+        next_block_z[0][2] = indi_coord_x;
+        next_block_z[1][2] = indi_coord_y+1;
+        next_block_z[0][3] = indi_coord_x+1;
+        next_block_z[1][3] = indi_coord_y+1;
+        break;
+
+        case 't':
+        next_block_z[0][0] = indi_coord_x;
+        next_block_z[1][0] = indi_coord_y;
+        next_block_z[0][1] = indi_coord_x;
+        next_block_z[1][1] = indi_coord_y-1;
+        next_block_z[0][2] = indi_coord_x-1;
+        next_block_z[1][2] = indi_coord_y;
+        next_block_z[0][3] = indi_coord_x+1;
+        next_block_z[1][3] = indi_coord_y;
+        break;
+    }
+    for(int b = 0; b < 4; b++) {
+        gotoxy(2*next_block_z[0][b], next_block_z[1][b]);
+        block_color(next_block_type_num);
+        std::cout << full;
+    }
+    textcolor(7, 0);
+    cursor_hide();
+}
+
 
 int Tetris::check_sum() {
     int sum = 0;
     for(int i = 0; i < height-1; i++) {
         for(int j = 1; j < width-1; j++) {
-            sum += tet[j][i];
+            sum += tet[j][i][0];
         }
     }
     return sum;
@@ -471,7 +627,7 @@ void Tetris::down_arrow() {
 }
 
 void Tetris::left_arrow() {
-    nextblock = 0;
+    next_block_index = 0;
     int check = check_sum();
     block_switch(Off);
     
@@ -501,7 +657,7 @@ void Tetris::left_arrow() {
 }
 
 void Tetris::right_arrow() {
-    nextblock = 0;
+    next_block_index = 0;
     int check = check_sum();
     block_switch(Off);
     for(int b = 0; b<4; b++){
@@ -537,7 +693,7 @@ void Tetris::down_natural() {
     block_switch(On);
     
     if (prohibit ==1) {
-        nextblock++;
+        next_block_index++;
         for(int b = 0; b<4; b++){
         z[1][b]--;
         }
@@ -546,7 +702,7 @@ void Tetris::down_natural() {
     }
 
     // if(check != check_sum()) {
-    //     nextblock++;
+    //     next_block_index++;
     //     correction_switch(Off);
     //     load_prev_tet();
     //     for(int b = 0; b<4; b++){
@@ -563,13 +719,13 @@ void Tetris::drop() {       //반복의 홋수에 대해 변수를 통해 조절할 필요가 있음.
 //하강 정도에 따라 반복횟수를 조절하면 좋을 듯.
     for (int i = 0; i < 22; i++) {
         down_natural();
-        nextblock = 0;
+        next_block_index = 0;
     }
     down_natural();
 }
 
 int Tetris::gotonextblock() {
-    return nextblock;
+    return next_block_index;
 }
 
 void Tetris::check_clear_line() {
@@ -577,31 +733,64 @@ void Tetris::check_clear_line() {
     
     for (int j = 0; j < height-1; j++) {
         for(int i = 1; i < width-1; i++){
-            sum[j] += tet[i][j];
+            sum[j] += tet[i][j][0];
         }    
     }
     for(int j = 0; j < height-1; j++) {
         if (sum[j] == 10){ // 한 줄이 꽉 찼다면, 그 줄을 지우고 그 줄 위에 있는 모든 블럭을 한 칸 아래로 내려라.
+            score += 10;
             for(int b = j; b > 0; b--){
                 for(int i = 1; i < width-1; i++){
-                    tet[i][b] = 0;
-                    tet[i][b] = tet[i][b-1];
+                    tet[i][b][0] = 0;
+                    tet[i][b][0] = tet[i][b-1][0];
+                    tet[i][b][1] = tet[i][b-1][1];
                 }
             }
         }
     }
 }
 
+void Tetris::scorer(){
+    int start_line = 12;
+    gotoxy(34, start_line);
+    printf("┌─ Score");
+    for(int i = 0; i<9; i++) printf("─");
+    printf("┐");
+
+    gotoxy(34, start_line+1);
+    printf("│");
+    for(int j = 0; j<16; j++) printf(" ");
+    printf("│");
+
+    gotoxy(34, start_line+2);
+    printf("│%16d│", score);
+    
+
+    gotoxy(34, start_line+3);
+    printf("│");
+    for(int j = 0; j<16; j++) printf(" ");
+    printf("│");
+
+
+    gotoxy(34, start_line+4);
+    printf("└");
+    for(int i = 0; i<16; i++) printf("─");
+    printf("┘");
+}
+
+
 int main() {
 
     Tetris tet;
     system("cls");
-    
+    tet.gen_first_block();
     nextblock:   
     tet.set_edge();
-    tet.gen_block();
     tet.set_block();
+    tet.gen_block();
     tet.show_stat_sym();
+    tet.scorer();
+    tet.next_block_indicator();
     tet.save_prev_tet();
     tet.block_switch(On);
 
@@ -625,7 +814,7 @@ int main() {
                     break;
 
                 case 80:
-                    // 아래쪽 방향키, 빠르게 하강(시간을 손봐야하나...)
+                    // 아래쪽 방향키, 빠르게 하강
                     down_num--;
                     tet.down_natural();
                     break;
@@ -654,10 +843,10 @@ int main() {
             down_num = 0;
         }
 
-        if(tet.nextblock == 2) {
-            tet.nextblock = 0;
+        if(tet.next_block_index == 2) {
+            tet.next_block_index = 0;
             tet.check_clear_line();
-            // system("cls");
+            tet.next2present();
             goto nextblock;
         }
 
