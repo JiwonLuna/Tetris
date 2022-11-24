@@ -132,17 +132,15 @@ void Tetris::show_stat_num() {
 }
 
 void Tetris::show_stat_sym() {
-    for (int i = 0; i < height; i++) {
+    for(int i = 0; i < height; i++){
         for (int j = 0; j < width; j++) {
-            if(tet[j][i]==1){
+            gotoxy(2*j, i);
+            if(tet[j][i]==0){
+                std::cout << empty;
+            }else if(tet[j][i]==1){
                 std::cout << full;
             }
-            else if(tet[j][i]==0) {
-                std::cout << empty;
-            }
         }
-        
-        std::cout << std::endl;
     }
 }
 
@@ -651,7 +649,7 @@ int main() {
         if(tet.nextblock == 1) {
             tet.nextblock = 0;
             tet.check_clear_line();
-            system("cls");
+            // system("cls");
             goto nextblock;
         }
 
