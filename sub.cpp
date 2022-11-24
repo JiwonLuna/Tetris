@@ -788,8 +788,10 @@ void Tetris::control_level() {
         drop_rate = 5000;
     }else if (250<=score && score < 400){
         drop_rate = 4000;
-    }else if (400<=score){
+    }else if (400<=score && score < 500){
         drop_rate = 3000;
+    }else if (500<=score){
+        drop_rate = 2000;
     }
 }
 
