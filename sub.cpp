@@ -97,6 +97,7 @@ class Tetris {
 
     void scorer();
     void control_level();
+    int drop_rate;
 };
 
 Tetris::Tetris() {
@@ -108,6 +109,7 @@ Tetris::Tetris() {
     block_type_num = 0;
     next_block_type_num = 0;
     score = 0;
+    drop_rate = 14000;
 }
 
 void Tetris::save_prev_tet() {
@@ -751,31 +753,45 @@ void Tetris::check_clear_line() {
 }
 
 void Tetris::scorer(){
-    int start_line = 12;
+    int start_line = 13;
     gotoxy(34, start_line);
     printf("¦£¦¡ Score");
-    for(int i = 0; i<9; i++) printf("¦¡");
+    for(int i = 0; i<8; i++) printf("¦¡");
     printf("¦¤");
 
     gotoxy(34, start_line+1);
     printf("¦¢");
-    for(int j = 0; j<16; j++) printf(" ");
+    for(int j = 0; j<15; j++) printf(" ");
     printf("¦¢");
 
     gotoxy(34, start_line+2);
-    printf("¦¢%16d¦¢", score);
+    printf("¦¢%15d¦¢", score);
     
 
     gotoxy(34, start_line+3);
     printf("¦¢");
-    for(int j = 0; j<16; j++) printf(" ");
+    for(int j = 0; j<15; j++) printf(" ");
     printf("¦¢");
 
 
     gotoxy(34, start_line+4);
     printf("¦¦");
-    for(int i = 0; i<16; i++) printf("¦¡");
+    for(int i = 0; i<15; i++) printf("¦¡");
     printf("¦¥");
+}
+
+void Tetris::control_level() {
+    if(score < 80){
+        drop_rate = 10000;
+    }else if(80<=score && score < 150){
+        drop_rate = 8000;
+    }else if(150<=score && score < 250){
+        drop_rate = 5000;
+    }else if (250<=score && score < 400){
+        drop_rate = 4000;
+    }else if (400<=score){
+        drop_rate = 3000;
+    }
 }
 
 
@@ -790,6 +806,7 @@ int main() {
     tet.gen_block();
     tet.show_stat_sym();
     tet.scorer();
+    tet.control_level();
     tet.next_block_indicator();
     tet.save_prev_tet();
     tet.block_switch(On);
@@ -838,7 +855,7 @@ int main() {
                 }
         }
 
-        if(down_num==10000){
+        if(down_num==tet.drop_rate){
             tet.down_natural();
             down_num = 0;
         }
