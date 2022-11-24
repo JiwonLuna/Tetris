@@ -47,7 +47,7 @@ class Tetris {
     int core_y;     // 블럭의 코어 y좌표 1~23 (위 -> 아래)
     int rotation;   // 회전 상태를 나타내는 인자 1~4
     int rotnum;     // 한 블럭이 낙하 전까지 회전한 횟수
-    int prohibit;   // 블럭의 이동제한을 나타내는 변수
+    
 
     int score;
 
@@ -57,6 +57,7 @@ class Tetris {
     public:
     Tetris();
     
+    int prohibit;
 
     int tet[width][height][2] = { 0 };  
     // 3번째 인덱스는 색깔 정보 저장용
@@ -700,7 +701,6 @@ void Tetris::down_natural() {
         z[1][b]--;
         }
         block_switch(On);
-        gotonextblock();
     }
 
     // if(check != check_sum()) {
@@ -811,6 +811,17 @@ int main() {
     tet.save_prev_tet();
     tet.block_switch(On);
 
+    
+
+    if (tet.prohibit == 1) {
+        // goto GameOver;
+        system("cls");
+        tet.textcolor(7, 0);
+        std::cout << "GAME OVER" << std::endl;
+        return 0;
+    }
+    
+
     int input;
     int down_time = (unsigned)time(NULL);
     down_time += 1; // 1초
@@ -869,44 +880,11 @@ int main() {
 
         
     }
-    
 
-    // while(true) {
-    //     if(kbhit()) {
-    //         int pressed_key = getch();
-    //         switch(pressed_key) {
-    //             case 72:
-    //                 // 위쪽 방향키, 회전
-    //                 currentPosY -= 1;
-    //                 setCursorPos(currentPosX, currentPosY);
-    //                 printf("■");
-    //                 break;
+// GameOver: 
+//     system("cls");
+//     std::cout << "GAME OVER" << std::endl;
 
-    //             case 80:
-    //                 // 아래쪽 방향키, 빠르게 하강(시간을 손봐야하나...)
-    //                 currentPosY += 1;
-    //                 setCursorPos(currentPosX, currentPosY);
-    //                 printf("■");
-    //                 break;
 
-    //             case 75:
-    //                 // 왼쪽 방향키, 왼쪽으로 이동
-    //                 currentPosX -= 2;
-    //                 setCursorPos(currentPosX, currentPosY);
-    //                 printf("■");
-    //                 break;
-
-    //             case 77:
-    //                 // 오른쪽 방향키, 오른쪽으로 이동
-    //                 currentPosX += 2;
-    //                 setCursorPos(currentPosX, currentPosY);
-    //                 printf("■");
-    //                 break;
-
-    //             default:
-    //                 break;
-    //             }
-    //     }
-    // }
     return 0;
 }
