@@ -616,37 +616,45 @@ int main() {
         down_num++;
 
         if(kbhit()) {
-            input = _getch();
+            input = getch();
             
-            if (input ==224){
-                input = _getch();
-            }
-            if (input == UP){
-                tet.up_arrow();
-            }
-            else if (input == DOWN) {
-                down_num--;
-                tet.down_natural();
-            }
-            else if (input == RIGHT) {
-                tet.right_arrow();
-            }
-            else if (input == LEFT) {
-                tet.left_arrow();
-            }
+            switch(input) {
+                case 72:
+                    // 위쪽 방향키, 회전
+                    tet.up_arrow();
+                    break;
 
-            if(getch()==' ') {
-                tet.drop();
-            }
+                case 80:
+                    // 아래쪽 방향키, 빠르게 하강(시간을 손봐야하나...)
+                    down_num--;
+                    tet.down_natural();
+                    break;
+
+                case 75:
+                    // 왼쪽 방향키, 왼쪽으로 이동
+                    tet.left_arrow();
+                    break;
+
+                case 77:
+                    // 오른쪽 방향키, 오른쪽으로 이동
+                    tet.right_arrow();
+                    break;
+                
+                case ' ':
+                    tet.drop();
+                    break;
+
+                default:
+                    break;
+                }
         }
-
 
         if(down_num==10000){
             tet.down_natural();
             down_num = 0;
         }
 
-        if(tet.nextblock == 1) {
+        if(tet.nextblock == 2) {
             tet.nextblock = 0;
             tet.check_clear_line();
             // system("cls");
